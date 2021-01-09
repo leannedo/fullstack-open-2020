@@ -9,6 +9,9 @@ const Home = () => {
       <div>
         <Link to="/courseinfo">Course Info</Link>
       </div>
+      <div>
+        <Link to="/phonebook">Phone Book</Link>
+      </div>
     </div>
   );
 };
