@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import personService from "./services/persons";
 import Filter from "./Filter/Filter";
 import PersonForm from "./PersonForm/PersonForm";
 import Persons from "./Persons/Persons";
@@ -10,38 +10,57 @@ const PhoneBook = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
 
-  const hook = () => {
-    axios
-      .get("http://localhost:3001/persons")
-      .then((response) => setPersons(response.data));
-  };
+  useEffect(() => {
+    personService.getAll().then((initialPersons) => setPersons(initialPersons));
+  }, []);
 
-  useEffect(hook, []);
-
-  const findExistingPersonByName = (arr) => {
-    return arr.find((person) => person.name === newName);
+  const findExistingPersonByName = (name) => {
+    return persons.find((person) => person.name === name);
   };
 
   const addPerson = (e) => {
     e.preventDefault();
 
-    const found = findExistingPersonByName(persons);
+    const personExist = findExistingPersonByName(newName);
 
-    if (found) {
-      alert(`${newName} is already added to phonebook`);
+    if (personExist) {
+      onUpdateExistingPerson(personExist, newNumber);
+
       return;
     }
 
     const personObject = {
       name: newName,
       number: newNumber,
-      id: newName.length + 1,
     };
 
-    setPersons([...persons, personObject]);
+    personService.create(personObject).then((returnedPerson) => {
+      setPersons([...persons, returnedPerson]);
+      setNewName(" ");
+      setNewNumber(" ");
+    });
+  };
 
-    setNewName(" ");
-    setNewNumber(" ");
+  const onUpdateExistingPerson = (existingPerson, updateFieldValue) => {
+    const confirm = window.confirm(
+      `${existingPerson.name} is already added, update phone number?`
+    );
+
+    const updateObject = { ...existingPerson, number: updateFieldValue };
+
+    confirm &&
+      personService
+        .update(existingPerson.id, updateObject)
+        .then((updatedPerson) => {
+          console.log(updatedPerson);
+          setPersons(
+            persons.map((person) =>
+              person.id !== existingPerson.id ? person : updatedPerson
+            )
+          );
+          setNewName(" ");
+          setNewNumber(" ");
+        });
   };
 
   const handlePersonChange = (e) => {
@@ -65,6 +84,15 @@ const PhoneBook = () => {
     setFoundPersons(result);
   };
 
+  const onPersonDelete = (id) => {
+    const confirm = window.confirm("Delete users?");
+    confirm &&
+      personService.deletePerson(id).then((response) => {
+        console.log(response);
+        setPersons(persons.filter((person) => person.id !== id));
+      });
+  };
+
   return (
     <div>
       <h1>Phone Book</h1>
@@ -78,6 +106,8 @@ const PhoneBook = () => {
         onNumberChangeHandler={handleNumberChange}
       />
       <h2>Numbers</h2>
+      <Persons personsArr={persons} onClickHandler={onPersonDelete} />
+      <h2>Search result</h2>
       <Persons personsArr={foundPersons} />
     </div>
   );

@@ -1,12 +1,15 @@
 import React from "react";
 
-const Persons = ({ personsArr }) => {
+const Persons = ({ personsArr, onClickHandler }) => {
   return (
     <div>
       {personsArr.map((person) => (
-        <h4 key={person.name}>
-          {person.name} {person.number}
-        </h4>
+        <div key={person.name}>
+          <h4>
+            {person.name} {person.number}
+          </h4>
+          <button onClick={() => onClickHandler(person.id)}>Delete</button>
+        </div>
       ))}
     </div>
   );
